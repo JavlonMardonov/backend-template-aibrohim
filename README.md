@@ -105,7 +105,7 @@ Log output:
 **Single resource (no wrapper):**
 ```json
 {
-  "uid": "550e8400-e29b-41d4-a716-446655440000",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
   "email": "user@example.com",
   "fullName": "John Doe",
   "role": "user"
@@ -330,7 +330,7 @@ Cache MISS → Query DB → Cache result → Return user
 |---------|-------|
 | Key format | `user:{userId}` |
 | TTL | 5 minutes |
-| Cached fields | id, uid, email, fullName, role, refreshToken, deletedAt |
+| Cached fields | id, email, fullName, role, refreshToken, deletedAt |
 
 **Cache Invalidation:**
 
@@ -362,7 +362,7 @@ export class EntityCacheService {
 
   constructor(private redis: RedisService) {}
 
-  async get(id: number): Promise<CachedEntity | null> {
+  async get(id: string): Promise<CachedEntity | null> {
     const cached = await this.redis.get(`${this.PREFIX}:${id}`);
     return cached ? JSON.parse(cached) : null;
   }
@@ -375,7 +375,7 @@ export class EntityCacheService {
     );
   }
 
-  async invalidate(id: number): Promise<void> {
+  async invalidate(id: string): Promise<void> {
     await this.redis.del(`${this.PREFIX}:${id}`);
   }
 }
@@ -447,8 +447,7 @@ Each feature module follows this layered architecture:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | Int | Auto-increment primary key (internal) |
-| uid | UUID | Public identifier for API |
+| id | UUID | Primary key (exposed in API) |
 | email | String | Unique email address |
 | password | String | Bcrypt hashed password |
 | fullName | String | User's full name |
@@ -486,9 +485,9 @@ Each feature module follows this layered architecture:
 | GET | /me | JWT | Get current user profile |
 | PATCH | /me | JWT | Update current user profile |
 | PATCH | /me/password | JWT | Change password |
-| GET | /:uid | Admin | Get user by UID |
-| PATCH | /:uid | Admin | Update user (admin) |
-| DELETE | /:uid | Admin | Soft delete user |
+| GET | /:id | Admin | Get user by ID |
+| PATCH | /:id | Admin | Update user (admin) |
+| DELETE | /:id | Admin | Soft delete user |
 
 ### Upload Module (`/api/upload`)
 
@@ -561,14 +560,14 @@ Response DTOs use static factory methods:
 ```typescript
 export class SomethingResponse {
   @ApiProperty()
-  uid: string;
+  id: string;
 
   @ApiProperty()
   name: string;
 
   static fromEntity(entity: Something): SomethingResponse {
     return {
-      uid: entity.uid,
+      id: entity.id,
       name: entity.name,
     };
   }
@@ -662,7 +661,7 @@ TypeScript path aliases for cleaner imports:
 2. Use barrel exports (index.ts) for all directories
 3. Use static factory methods for response DTOs
 4. Use soft deletes (deletedAt field) for user data
-5. Use UUID for public identifiers, auto-increment for internal IDs
+5. Use UUID for primary keys (simple, sufficient for most projects)
 6. All endpoints return consistent response structures
 7. Use validation pipes with whitelist and transform options
 
@@ -737,15 +736,14 @@ When creating new Prisma models, always:
 1. Use camelCase for field names in schema
 2. Add `@map("snake_case")` for multi-word fields
 3. Add `@@map("table_name")` for table name (plural, snake_case)
-4. Use `@db.Uuid` for UUID fields
+4. Use UUID for primary key with `@db.Uuid`
 
 Example:
 ```prisma
 model BlogPost {
-  id          Int      @id @default(autoincrement())
-  uid         String   @unique @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
   title       String
-  authorId    Int      @map("author_id")
+  authorId    String   @map("author_id") @db.Uuid
   publishedAt DateTime? @map("published_at")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
