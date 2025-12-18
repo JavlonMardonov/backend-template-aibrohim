@@ -47,9 +47,9 @@ export class UsersService {
     };
   }
 
-  async findByUid(uid: string): Promise<UserResponse> {
+  async findById(id: string): Promise<UserResponse> {
     const user = await this.prisma.user.findFirst({
-      where: { uid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!user) {
@@ -59,9 +59,9 @@ export class UsersService {
     return UserResponse.fromEntity(user);
   }
 
-  async update(uid: string, dto: UpdateUserDto): Promise<UserResponse> {
+  async update(id: string, dto: UpdateUserDto): Promise<UserResponse> {
     const user = await this.prisma.user.findFirst({
-      where: { uid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!user) {
@@ -69,29 +69,29 @@ export class UsersService {
     }
 
     const updated = await this.prisma.user.update({
-      where: { id: user.id },
+      where: { id },
       data: dto,
     });
 
-    await this.userCache.invalidate(user.id);
+    await this.userCache.invalidate(id);
 
     return UserResponse.fromEntity(updated);
   }
 
   async adminUpdate(
-    uid: string,
+    id: string,
     dto: AdminUpdateUserDto,
     currentUser: CurrentUserPayload,
   ): Promise<UserResponse> {
     const user = await this.prisma.user.findFirst({
-      where: { uid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    if (user.uid === currentUser.uid && dto.role) {
+    if (user.id === currentUser.id && dto.role) {
       throw new ForbiddenException('Cannot modify your own role');
     }
 
@@ -104,18 +104,18 @@ export class UsersService {
     }
 
     const updated = await this.prisma.user.update({
-      where: { id: user.id },
+      where: { id },
       data: dto,
     });
 
-    await this.userCache.invalidate(user.id);
+    await this.userCache.invalidate(id);
 
     return UserResponse.fromEntity(updated);
   }
 
-  async changePassword(uid: string, dto: ChangePasswordDto): Promise<void> {
+  async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {
     const user = await this.prisma.user.findFirst({
-      where: { uid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!user) {
@@ -130,16 +130,16 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
     await this.prisma.user.update({
-      where: { id: user.id },
+      where: { id },
       data: { password: hashedPassword },
     });
 
-    await this.userCache.invalidate(user.id);
+    await this.userCache.invalidate(id);
   }
 
-  async delete(uid: string): Promise<void> {
+  async delete(id: string): Promise<void> {
     const user = await this.prisma.user.findFirst({
-      where: { uid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!user) {
@@ -147,10 +147,10 @@ export class UsersService {
     }
 
     await this.prisma.user.update({
-      where: { id: user.id },
+      where: { id },
       data: { deletedAt: new Date() },
     });
 
-    await this.userCache.invalidate(user.id);
+    await this.userCache.invalidate(id);
   }
 }

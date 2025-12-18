@@ -50,7 +50,7 @@ export class AuthService {
 
     await this.emailVerificationService.sendVerificationEmail(user.id);
 
-    const tokens = await this.generateTokens(user.id, user.uid, user.email);
+    const tokens = await this.generateTokens(user.id, user.email);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -75,7 +75,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const tokens = await this.generateTokens(user.id, user.uid, user.email);
+    const tokens = await this.generateTokens(user.id, user.email);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -85,7 +85,7 @@ export class AuthService {
     };
   }
 
-  async logout(userId: number): Promise<void> {
+  async logout(userId: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
       data: { refreshToken: null },
@@ -95,7 +95,7 @@ export class AuthService {
   }
 
   async refreshTokens(dto: RefreshTokenDto): Promise<AuthResponse> {
-    let payload: { sub: number; uid: string; email: string };
+    let payload: { sub: string; email: string };
 
     try {
       payload = await this.jwtService.verifyAsync(dto.refreshToken);
@@ -117,7 +117,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const tokens = await this.generateTokens(user.id, user.uid, user.email);
+    const tokens = await this.generateTokens(user.id, user.email);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);
 
@@ -143,8 +143,8 @@ export class AuthService {
     await this.emailVerificationService.resendVerificationEmail(email);
   }
 
-  private async generateTokens(userId: number, uid: string, email: string) {
-    const payload = { sub: userId, uid, email };
+  private async generateTokens(userId: string, email: string) {
+    const payload = { sub: userId, email };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
@@ -158,7 +158,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async updateRefreshToken(userId: number, refreshToken: string): Promise<void> {
+  private async updateRefreshToken(userId: string, refreshToken: string): Promise<void> {
     const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
 
     await this.prisma.user.update({

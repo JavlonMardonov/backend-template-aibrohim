@@ -8,8 +8,7 @@ import { PrismaService } from '@infra/prisma';
 import { UserCacheService } from '@infra/redis';
 
 interface JwtPayload {
-  sub: number;
-  uid: string;
+  sub: string;
   email: string;
 }
 
@@ -45,7 +44,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       await this.userCache.set(user);
       cachedUser = {
         id: user.id,
-        uid: user.uid,
         email: user.email,
         fullName: user.fullName,
         role: user.role,
@@ -64,7 +62,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     return {
       id: cachedUser.id,
-      uid: cachedUser.uid,
       email: cachedUser.email,
       fullName: cachedUser.fullName,
       role: cachedUser.role as CurrentUserPayload['role'],

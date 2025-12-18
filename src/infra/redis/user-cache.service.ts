@@ -4,8 +4,7 @@ import { User } from '@prisma/client';
 import { RedisService } from './redis.service';
 
 export interface CachedUser {
-  id: number;
-  uid: string;
+  id: string;
   email: string;
   fullName: string;
   role: string;
@@ -20,11 +19,11 @@ export class UserCacheService {
 
   constructor(private redis: RedisService) {}
 
-  private getKey(userId: number): string {
+  private getKey(userId: string): string {
     return `${this.PREFIX}:${userId}`;
   }
 
-  async get(userId: number): Promise<CachedUser | null> {
+  async get(userId: string): Promise<CachedUser | null> {
     const cached = await this.redis.get(this.getKey(userId));
 
     if (!cached) {
@@ -37,7 +36,6 @@ export class UserCacheService {
   async set(user: User): Promise<void> {
     const cached: CachedUser = {
       id: user.id,
-      uid: user.uid,
       email: user.email,
       fullName: user.fullName,
       role: user.role,
@@ -48,7 +46,7 @@ export class UserCacheService {
     await this.redis.set(this.getKey(user.id), JSON.stringify(cached), this.TTL_SECONDS);
   }
 
-  async invalidate(userId: number): Promise<void> {
+  async invalidate(userId: string): Promise<void> {
     await this.redis.del(this.getKey(userId));
   }
 }

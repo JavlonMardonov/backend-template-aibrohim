@@ -11,7 +11,7 @@ export class EmailVerificationService {
     private mailService: MailService,
   ) {}
 
-  async sendVerificationEmail(userId: number): Promise<void> {
+  async sendVerificationEmail(userId: string): Promise<void> {
     const token = randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 

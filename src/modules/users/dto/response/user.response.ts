@@ -4,7 +4,7 @@ import { Role, User } from '@prisma/client';
 
 export class UserResponse {
   @ApiProperty()
-  uid: string;
+  id: string;
 
   @ApiProperty()
   email: string;
@@ -23,7 +23,7 @@ export class UserResponse {
 
   static fromEntity(user: User): UserResponse {
     return {
-      uid: user.uid,
+      id: user.id,
       email: user.email,
       fullName: user.fullName,
       role: user.role,

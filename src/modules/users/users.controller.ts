@@ -41,14 +41,14 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, type: UserResponse })
   getMe(@CurrentUser() user: CurrentUserPayload) {
-    return this.usersService.findByUid(user.uid);
+    return this.usersService.findById(user.id);
   }
 
   @Patch('me')
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, type: UserResponse })
   updateMe(@CurrentUser() user: CurrentUserPayload, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(user.uid, dto);
+    return this.usersService.update(user.id, dto);
   }
 
   @Patch('me/password')
@@ -56,38 +56,38 @@ export class UsersController {
   @ApiOperation({ summary: 'Change current user password' })
   @ApiResponse({ status: 204, description: 'Password changed successfully' })
   changePassword(@CurrentUser() user: CurrentUserPayload, @Body() dto: ChangePasswordDto) {
-    return this.usersService.changePassword(user.uid, dto);
+    return this.usersService.changePassword(user.id, dto);
   }
 
-  @Get(':uid')
+  @Get(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.superadmin, Role.admin)
-  @ApiOperation({ summary: 'Get user by UID (Admin only)' })
+  @ApiOperation({ summary: 'Get user by ID (Admin only)' })
   @ApiResponse({ status: 200, type: UserResponse })
-  findOne(@Param('uid') uid: string) {
-    return this.usersService.findByUid(uid);
+  findOne(@Param('id') id: string) {
+    return this.usersService.findById(id);
   }
 
-  @Patch(':uid')
+  @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.superadmin, Role.admin)
   @ApiOperation({ summary: 'Update user (Admin only)' })
   @ApiResponse({ status: 200, type: UserResponse })
   update(
-    @Param('uid') uid: string,
+    @Param('id') id: string,
     @Body() dto: AdminUpdateUserDto,
     @CurrentUser() currentUser: CurrentUserPayload,
   ) {
-    return this.usersService.adminUpdate(uid, dto, currentUser);
+    return this.usersService.adminUpdate(id, dto, currentUser);
   }
 
-  @Delete(':uid')
+  @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.superadmin, Role.admin)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   @ApiResponse({ status: 204, description: 'User deleted successfully' })
-  delete(@Param('uid') uid: string) {
-    return this.usersService.delete(uid);
+  delete(@Param('id') id: string) {
+    return this.usersService.delete(id);
   }
 }
