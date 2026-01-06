@@ -2,7 +2,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import basicAuth from 'express-basic-auth';
+import * as basicAuth from 'express-basic-auth';
 import helmet from 'helmet';
 
 import { GlobalExceptionFilter } from '@core/filters';
@@ -82,20 +82,6 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = configService.get<number>('PORT', 4000);
-
-  process.on('SIGTERM', async () => {
-    logger.log('SIGTERM received. Starting graceful shutdown...');
-    await app.close();
-    logger.log('Application closed gracefully');
-    process.exit(0);
-  });
-
-  process.on('SIGINT', async () => {
-    logger.log('SIGINT received. Starting graceful shutdown...');
-    await app.close();
-    logger.log('Application closed gracefully');
-    process.exit(0);
-  });
 
   await app.listen(port);
 

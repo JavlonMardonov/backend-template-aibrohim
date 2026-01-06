@@ -48,8 +48,6 @@ export class AuthService {
       },
     });
 
-    await this.emailVerificationService.sendVerificationEmail(user.id);
-
     const tokens = await this.generateTokens(user.id, user.email);
 
     await this.updateRefreshToken(user.id, tokens.refreshToken);

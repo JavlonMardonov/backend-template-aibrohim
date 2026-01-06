@@ -1,16 +1,24 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import * as crypto from 'crypto';
 
 import { MailService } from '@infra/mail';
 import { PrismaService } from '@infra/prisma';
+import { PasswordResetCacheService } from '@infra/redis';
 
 @Injectable()
 export class PasswordResetService {
+  private readonly logger = new Logger(PasswordResetService.name);
+
   constructor(
     private prisma: PrismaService,
     private mailService: MailService,
+    private passwordResetCache: PasswordResetCacheService,
   ) {}
+
+  private generateResetToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
 
   async sendPasswordResetEmail(email: string): Promise<void> {
     const user = await this.prisma.user.findFirst({
@@ -21,31 +29,32 @@ export class PasswordResetService {
       return;
     }
 
-    const token = randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 60 * 60 * 1000);
+    await this.passwordResetCache.invalidateByUserId(user.id);
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordResetToken: token,
-        passwordResetExpires: expires,
-      },
-    });
+    const token = this.generateResetToken();
+
+    await this.passwordResetCache.set(user.id, user.email, token);
+
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`Password reset token for ${user.email}: ${token}`);
+    }
 
     await this.mailService.sendPasswordReset(email, token);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
+    const data = await this.passwordResetCache.getByToken(token);
+
+    if (!data) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
     const user = await this.prisma.user.findFirst({
-      where: {
-        passwordResetToken: token,
-        passwordResetExpires: { gte: new Date() },
-        deletedAt: null,
-      },
+      where: { id: data.userId, deletedAt: null },
     });
 
     if (!user) {
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new BadRequestException('User not found');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -54,10 +63,10 @@ export class PasswordResetService {
       where: { id: user.id },
       data: {
         password: hashedPassword,
-        passwordResetToken: null,
-        passwordResetExpires: null,
         refreshToken: null,
       },
     });
+
+    await this.passwordResetCache.invalidate(data.userId, data.token);
   }
 }
