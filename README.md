@@ -28,44 +28,44 @@ npm run start:dev
 
 ### Security
 
-| Feature | Description |
-|---------|-------------|
-| **Helmet.js** | HTTP security headers (CSP, XSS protection, etc.) |
-| **Rate Limiting** | Global: 100 req/min, Auth endpoints: 3-15 req/min |
-| **JWT Authentication** | Access tokens (15min) + Refresh tokens (7d) |
-| **Password Hashing** | Bcrypt with salt rounds |
-| **CORS** | Configurable whitelist |
-| **Soft Deletes** | Data preservation for audit trails |
-| **User Caching** | Redis cache for JWT validation (5 min TTL) |
+| Feature                | Description                                       |
+| ---------------------- | ------------------------------------------------- |
+| **Helmet.js**          | HTTP security headers (CSP, XSS protection, etc.) |
+| **Rate Limiting**      | Global: 100 req/min, Auth endpoints: 3-15 req/min |
+| **JWT Authentication** | Access tokens (15min) + Refresh tokens (7d)       |
+| **Password Hashing**   | Bcrypt with salt rounds                           |
+| **CORS**               | Configurable whitelist                            |
+| **Soft Deletes**       | Data preservation for audit trails                |
+| **User Caching**       | Redis cache for JWT validation (5 min TTL)        |
 
 ### Rate Limiting by Endpoint
 
-| Endpoint | Limit | Reason |
-|----------|-------|--------|
-| Global | 100/min | General protection |
-| `/auth/signin` | 15/min | Brute force protection |
-| `/auth/signup` | 5/min | Spam prevention |
-| `/auth/forgot-password` | 3/min | Email spam prevention |
-| `/auth/resend-verification` | 3/min | Email spam prevention |
-| `/auth/refresh` | 30/min | Token refresh |
-| `/auth/reset-password` | 5/min | Reset attempts |
-| `/auth/verify-email` | 5/min | Verification attempts |
+| Endpoint                    | Limit   | Reason                 |
+| --------------------------- | ------- | ---------------------- |
+| Global                      | 100/min | General protection     |
+| `/auth/signin`              | 15/min  | Brute force protection |
+| `/auth/signup`              | 5/min   | Spam prevention        |
+| `/auth/forgot-password`     | 3/min   | Email spam prevention  |
+| `/auth/resend-verification` | 3/min   | Email spam prevention  |
+| `/auth/refresh`             | 30/min  | Token refresh          |
+| `/auth/reset-password`      | 5/min   | Reset attempts         |
+| `/auth/verify-email`        | 5/min   | Verification attempts  |
 
 ### Observability
 
-| Feature | Description |
-|---------|-------------|
-| **Request Correlation IDs** | UUID attached to every request for tracing |
-| **Request/Response Logging** | Opt-in HTTP logging with timing |
-| **Structured Error Responses** | Consistent error format with codes |
-| **Health Checks** | Liveness and readiness probes |
+| Feature                        | Description                                |
+| ------------------------------ | ------------------------------------------ |
+| **Request Correlation IDs**    | UUID attached to every request for tracing |
+| **Request/Response Logging**   | Opt-in HTTP logging with timing            |
+| **Structured Error Responses** | Consistent error format with codes         |
+| **Health Checks**              | Liveness and readiness probes              |
 
 ### Health Check Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/health` | Full health check (DB + Redis) |
-| `GET /api/health/live` | Liveness probe (is app running?) |
+| Endpoint                | Purpose                              |
+| ----------------------- | ------------------------------------ |
+| `GET /api/health`       | Full health check (DB + Redis)       |
+| `GET /api/health/live`  | Liveness probe (is app running?)     |
 | `GET /api/health/ready` | Readiness probe (can serve traffic?) |
 
 ### Request Correlation IDs
@@ -95,6 +95,7 @@ ENABLE_REQUEST_LOGGING=false  # Disable
 ```
 
 Log output:
+
 ```
 → [correlation-id] POST /api/auth/signin - 192.168.1.1 - Mozilla/5.0...
 ← [correlation-id] POST /api/auth/signin - 200 - 45ms
@@ -103,6 +104,7 @@ Log output:
 ### Response Format
 
 **Single resource (no wrapper):**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -113,6 +115,7 @@ Log output:
 ```
 
 **Paginated list (with data + meta):**
+
 ```json
 {
   "data": [...],
@@ -128,14 +131,13 @@ Log output:
 ```
 
 **Error:**
+
 ```json
 {
   "error": {
     "code": "VALIDATION_ERROR",
     "message": "Validation failed",
-    "details": [
-      { "field": "email", "message": "email must be valid" }
-    ],
+    "details": [{ "field": "email", "message": "email must be valid" }],
     "timestamp": "2025-01-15T10:30:00.000Z",
     "path": "/api/auth/signup",
     "requestId": "550e8400-e29b-41d4-a716-446655440000"
@@ -145,16 +147,16 @@ Log output:
 
 **Error Codes:**
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `VALIDATION_ERROR` | 400 | Input validation failed |
-| `BAD_REQUEST` | 400 | Invalid request |
-| `UNAUTHORIZED` | 401 | Authentication required |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `CONFLICT` | 409 | Resource conflict |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Server error |
+| Code                  | HTTP Status | Description              |
+| --------------------- | ----------- | ------------------------ |
+| `VALIDATION_ERROR`    | 400         | Input validation failed  |
+| `BAD_REQUEST`         | 400         | Invalid request          |
+| `UNAUTHORIZED`        | 401         | Authentication required  |
+| `FORBIDDEN`           | 403         | Insufficient permissions |
+| `NOT_FOUND`           | 404         | Resource not found       |
+| `CONFLICT`            | 409         | Resource conflict        |
+| `RATE_LIMIT_EXCEEDED` | 429         | Too many requests        |
+| `INTERNAL_ERROR`      | 500         | Server error             |
 
 **Custom API Exceptions:**
 
@@ -171,7 +173,7 @@ throw new ApiBadRequestException('Invalid input', { errorCode: 'INVALID_FORMAT' 
 
 // With metadata
 throw new ApiBadRequestException('Validation failed', {
-  metadata: { field: 'email', reason: 'already_exists' }
+  metadata: { field: 'email', reason: 'already_exists' },
 });
 ```
 
@@ -179,8 +181,8 @@ Available exceptions: `ApiBadRequestException`, `ApiUnauthorizedException`, `Api
 
 ### Enum Values
 
-| Enum | Values | Usage |
-|------|--------|-------|
+| Enum   | Values                            | Usage                 |
+| ------ | --------------------------------- | --------------------- |
 | `Role` | `superadmin` \| `admin` \| `user` | User permission level |
 
 ### Graceful Shutdown
@@ -201,10 +203,10 @@ Prisma connection pooling via URL parameters:
 DATABASE_URL=postgresql://...?connection_limit=10&pool_timeout=30
 ```
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `connection_limit` | Max connections in pool | 10 |
-| `pool_timeout` | Wait time for connection (seconds) | 30 |
+| Parameter          | Description                        | Default |
+| ------------------ | ---------------------------------- | ------- |
+| `connection_limit` | Max connections in pool            | 10      |
+| `pool_timeout`     | Wait time for connection (seconds) | 30      |
 
 ### Environment Validation
 
@@ -223,12 +225,14 @@ Application fails fast if configuration is invalid.
 Transactional emails are sent via Amazon Simple Email Service (SES).
 
 **Features:**
+
 - Email verification on signup
 - Password reset emails
 - Customizable HTML templates
 - Plain text fallback support
 
 **Configuration:**
+
 ```bash
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your-access-key
@@ -237,6 +241,7 @@ MAIL_FROM=noreply@yourdomain.com
 ```
 
 **Usage in services:**
+
 ```typescript
 // Inject MailService (globally available)
 constructor(private mailService: MailService) {}
@@ -259,6 +264,7 @@ await this.mailService.sendPasswordReset(email, token);
 File uploads are stored in Cloudflare R2 (S3-compatible storage).
 
 **Features:**
+
 - Direct file upload (via server)
 - Presigned URLs for client-side uploads
 - Presigned URLs for secure downloads
@@ -266,6 +272,7 @@ File uploads are stored in Cloudflare R2 (S3-compatible storage).
 - MIME type validation
 
 **Configuration:**
+
 ```bash
 R2_ACCOUNT_ID=your-cloudflare-account-id
 R2_ACCESS_KEY_ID=your-r2-access-key
@@ -279,14 +286,15 @@ ALLOWED_MIME_TYPES=image/jpeg,image/png,image/gif,image/webp,application/pdf
 
 **API Endpoints:**
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /upload | Direct file upload |
-| POST | /upload/presigned/upload | Get presigned URL for client upload |
-| POST | /upload/presigned/download | Get presigned URL for download |
-| DELETE | /upload/:key | Delete file by storage key |
+| Method | Endpoint                   | Description                         |
+| ------ | -------------------------- | ----------------------------------- |
+| POST   | /upload                    | Direct file upload                  |
+| POST   | /upload/presigned/upload   | Get presigned URL for client upload |
+| POST   | /upload/presigned/download | Get presigned URL for download      |
+| DELETE | /upload/:key               | Delete file by storage key          |
 
 **Usage in services:**
+
 ```typescript
 // Inject StorageService (globally available)
 constructor(private storageService: StorageService) {}
@@ -314,6 +322,7 @@ const key = this.storageService.generateKey('avatars', 'photo.jpg');
 User data is cached in Redis to eliminate database queries on every authenticated request.
 
 **How it works:**
+
 ```
 Authenticated Request
     ↓
@@ -336,16 +345,17 @@ Cache MISS → Query DB → Cache result → Return user
 
 Cache is automatically invalidated when user data changes:
 
-| Operation | Invalidates Cache |
-|-----------|-------------------|
-| User update (profile) | Yes |
-| User update (admin) | Yes |
-| Password change | Yes |
-| User delete | Yes |
-| Logout | Yes |
-| Token refresh | Yes |
+| Operation             | Invalidates Cache |
+| --------------------- | ----------------- |
+| User update (profile) | Yes               |
+| User update (admin)   | Yes               |
+| Password change       | Yes               |
+| User delete           | Yes               |
+| Logout                | Yes               |
+| Token refresh         | Yes               |
 
 **Performance Impact:**
+
 - Before: Every authenticated request = 1 DB query
 - After: Most requests = 1 Redis lookup (~0.5ms vs ~5-20ms)
 
@@ -445,66 +455,66 @@ Each feature module follows this layered architecture:
 
 ### User Model
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | UUID | Primary key (exposed in API) |
-| email | String | Unique email address |
-| password | String | Bcrypt hashed password |
-| fullName | String | User's full name |
-| role | Enum | superadmin, admin, user |
-| emailVerified | Boolean | Email verification status |
-| emailVerificationToken | String? | Verification token |
-| emailVerificationExpires | DateTime? | Token expiry |
-| passwordResetToken | String? | Reset token |
-| passwordResetExpires | DateTime? | Token expiry |
-| refreshToken | String? | Hashed refresh token |
-| createdAt | DateTime | Creation timestamp |
-| updatedAt | DateTime | Last update timestamp |
-| deletedAt | DateTime? | Soft delete timestamp |
+| Field                    | Type      | Description                  |
+| ------------------------ | --------- | ---------------------------- |
+| id                       | UUID      | Primary key (exposed in API) |
+| email                    | String    | Unique email address         |
+| password                 | String    | Bcrypt hashed password       |
+| fullName                 | String    | User's full name             |
+| role                     | Enum      | superadmin, admin, user      |
+| emailVerified            | Boolean   | Email verification status    |
+| emailVerificationToken   | String?   | Verification token           |
+| emailVerificationExpires | DateTime? | Token expiry                 |
+| passwordResetToken       | String?   | Reset token                  |
+| passwordResetExpires     | DateTime? | Token expiry                 |
+| refreshToken             | String?   | Hashed refresh token         |
+| createdAt                | DateTime  | Creation timestamp           |
+| updatedAt                | DateTime  | Last update timestamp        |
+| deletedAt                | DateTime? | Soft delete timestamp        |
 
 ## API Endpoints
 
 ### Auth Module (`/api/auth`)
 
-| Method | Endpoint | Auth | Rate Limit | Description |
-|--------|----------|------|------------|-------------|
-| POST | /signup | Public | 5/min | Register new user |
-| POST | /signin | Public | 15/min | Login with credentials |
-| POST | /logout | JWT | - | Logout current session |
-| POST | /refresh | Public | 30/min | Refresh access token |
-| POST | /forgot-password | Public | 3/min | Request password reset |
-| POST | /reset-password | Public | 5/min | Reset password with token |
-| POST | /verify-email | Public | 5/min | Verify email with token |
-| POST | /resend-verification | Public | 3/min | Resend verification email |
+| Method | Endpoint             | Auth   | Rate Limit | Description               |
+| ------ | -------------------- | ------ | ---------- | ------------------------- |
+| POST   | /signup              | Public | 5/min      | Register new user         |
+| POST   | /signin              | Public | 15/min     | Login with credentials    |
+| POST   | /logout              | JWT    | -          | Logout current session    |
+| POST   | /refresh             | Public | 30/min     | Refresh access token      |
+| POST   | /forgot-password     | Public | 3/min      | Request password reset    |
+| POST   | /reset-password      | Public | 5/min      | Reset password with token |
+| POST   | /verify-email        | Public | 5/min      | Verify email with token   |
+| POST   | /resend-verification | Public | 3/min      | Resend verification email |
 
 ### Users Module (`/api/users`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | / | Admin | List all users (paginated) |
-| GET | /me | JWT | Get current user profile |
-| PATCH | /me | JWT | Update current user profile |
-| PATCH | /me/password | JWT | Change password |
-| GET | /:id | Admin | Get user by ID |
-| PATCH | /:id | Admin | Update user (admin) |
-| DELETE | /:id | Admin | Soft delete user |
+| Method | Endpoint     | Auth  | Description                 |
+| ------ | ------------ | ----- | --------------------------- |
+| GET    | /            | Admin | List all users (paginated)  |
+| GET    | /me          | JWT   | Get current user profile    |
+| PATCH  | /me          | JWT   | Update current user profile |
+| PATCH  | /me/password | JWT   | Change password             |
+| GET    | /:id         | Admin | Get user by ID              |
+| PATCH  | /:id         | Admin | Update user (admin)         |
+| DELETE | /:id         | Admin | Soft delete user            |
 
 ### Upload Module (`/api/upload`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | / | JWT | Upload file directly |
-| POST | /presigned/upload | JWT | Get presigned upload URL |
-| POST | /presigned/download | JWT | Get presigned download URL |
-| DELETE | /:key | JWT | Delete file by key |
+| Method | Endpoint            | Auth | Description                |
+| ------ | ------------------- | ---- | -------------------------- |
+| POST   | /                   | JWT  | Upload file directly       |
+| POST   | /presigned/upload   | JWT  | Get presigned upload URL   |
+| POST   | /presigned/download | JWT  | Get presigned download URL |
+| DELETE | /:key               | JWT  | Delete file by key         |
 
 ### Health Module (`/api/health`)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | / | Public | Full health check |
-| GET | /live | Public | Liveness probe |
-| GET | /ready | Public | Readiness probe |
+| Method | Endpoint | Auth   | Description       |
+| ------ | -------- | ------ | ----------------- |
+| GET    | /        | Public | Full health check |
+| GET    | /live    | Public | Liveness probe    |
+| GET    | /ready   | Public | Readiness probe   |
 
 ## Authentication Flow
 
@@ -528,6 +538,7 @@ Each feature module follows this layered architecture:
    - `index.ts`
 
 3. Register in `app.module.ts`:
+
    ```typescript
    imports: [
      // ... existing modules
@@ -542,6 +553,7 @@ Each feature module follows this layered architecture:
 ## DTOs and Validation
 
 Request DTOs use class-validator decorators:
+
 ```typescript
 export class CreateSomethingDto {
   @ApiProperty()
@@ -557,6 +569,7 @@ export class CreateSomethingDto {
 ```
 
 Response DTOs use static factory methods:
+
 ```typescript
 export class SomethingResponse {
   @ApiProperty()
@@ -577,7 +590,9 @@ export class SomethingResponse {
 ## Guards and Decorators
 
 ### @Public()
+
 Marks a route as public, bypassing JWT authentication:
+
 ```typescript
 @Public()
 @Get('public-data')
@@ -585,14 +600,18 @@ getPublicData() {}
 ```
 
 ### @CurrentUser()
+
 Extracts authenticated user from request:
+
 ```typescript
 @Get('me')
 getMe(@CurrentUser() user: CurrentUserPayload) {}
 ```
 
 ### @Roles()
+
 Restricts access to specific roles:
+
 ```typescript
 @UseGuards(RolesGuard)
 @Roles(Role.superadmin, Role.admin)
@@ -601,7 +620,9 @@ adminOnly() {}
 ```
 
 ### @SkipResponseWrapper()
+
 Skips the response wrapper for specific endpoints:
+
 ```typescript
 @SkipResponseWrapper()
 @Get('raw-data')
@@ -610,54 +631,56 @@ getRawData() {}
 
 ## Environment Variables
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| NODE_ENV | Environment mode | development | No |
-| PORT | Server port | 4000 | No |
-| DATABASE_URL | PostgreSQL connection string | - | Yes |
-| JWT_SECRET | JWT signing secret (min 32 chars) | - | Yes |
-| JWT_ACCESS_EXPIRES_IN | Access token TTL | 15m | No |
-| JWT_REFRESH_EXPIRES_IN | Refresh token TTL | 7d | No |
-| REDIS_HOST | Redis host | localhost | No |
-| REDIS_PORT | Redis port | 6379 | No |
-| CORS_WHITELIST | Allowed origins (comma-separated) | - | No |
-| SWAGGER_USERNAME | Swagger basic auth username | admin | No |
-| SWAGGER_PASSWORD | Swagger basic auth password (min 8 chars) | - | Yes |
-| AWS_REGION | AWS region for SES | us-east-1 | No |
-| AWS_ACCESS_KEY_ID | AWS access key ID | - | No |
-| AWS_SECRET_ACCESS_KEY | AWS secret access key | - | No |
-| MAIL_FROM | Email from address | - | No |
-| R2_ACCOUNT_ID | Cloudflare account ID | - | No |
-| R2_ACCESS_KEY_ID | R2 access key ID | - | No |
-| R2_SECRET_ACCESS_KEY | R2 secret access key | - | No |
-| R2_BUCKET_NAME | R2 bucket name | - | No |
-| R2_PUBLIC_URL | R2 public URL | - | No |
-| MAX_FILE_SIZE | Max upload size (bytes) | 10485760 | No |
-| ALLOWED_MIME_TYPES | Allowed MIME types | image/jpeg,... | No |
-| FRONTEND_URL | Frontend URL | - | No |
-| PASSWORD_RESET_URL | Password reset page URL | - | No |
-| EMAIL_VERIFICATION_URL | Email verification page URL | - | No |
-| SUPERADMIN_EMAIL | Initial superadmin email | - | No |
-| SUPERADMIN_PASSWORD | Initial superadmin password | - | No |
-| SUPERADMIN_FULL_NAME | Initial superadmin name | - | No |
-| ENABLE_REQUEST_LOGGING | Enable HTTP request logging | true | No |
+| Variable               | Description                               | Default        | Required |
+| ---------------------- | ----------------------------------------- | -------------- | -------- |
+| NODE_ENV               | Environment mode                          | development    | No       |
+| PORT                   | Server port                               | 4000           | No       |
+| DATABASE_URL           | PostgreSQL connection string              | -              | Yes      |
+| JWT_SECRET             | JWT signing secret (min 32 chars)         | -              | Yes      |
+| JWT_ACCESS_EXPIRES_IN  | Access token TTL                          | 15m            | No       |
+| JWT_REFRESH_EXPIRES_IN | Refresh token TTL                         | 7d             | No       |
+| REDIS_HOST             | Redis host                                | localhost      | No       |
+| REDIS_PORT             | Redis port                                | 6379           | No       |
+| CORS_WHITELIST         | Allowed origins (comma-separated)         | -              | No       |
+| SWAGGER_USERNAME       | Swagger basic auth username               | admin          | No       |
+| SWAGGER_PASSWORD       | Swagger basic auth password (min 8 chars) | -              | Yes      |
+| AWS_REGION             | AWS region for SES                        | us-east-1      | No       |
+| AWS_ACCESS_KEY_ID      | AWS access key ID                         | -              | No       |
+| AWS_SECRET_ACCESS_KEY  | AWS secret access key                     | -              | No       |
+| MAIL_FROM              | Email from address                        | -              | No       |
+| R2_ACCOUNT_ID          | Cloudflare account ID                     | -              | No       |
+| R2_ACCESS_KEY_ID       | R2 access key ID                          | -              | No       |
+| R2_SECRET_ACCESS_KEY   | R2 secret access key                      | -              | No       |
+| R2_BUCKET_NAME         | R2 bucket name                            | -              | No       |
+| R2_PUBLIC_URL          | R2 public URL                             | -              | No       |
+| MAX_FILE_SIZE          | Max upload size (bytes)                   | 10485760       | No       |
+| ALLOWED_MIME_TYPES     | Allowed MIME types                        | image/jpeg,... | No       |
+| FRONTEND_URL           | Frontend URL                              | -              | No       |
+| PASSWORD_RESET_URL     | Password reset page URL                   | -              | No       |
+| EMAIL_VERIFICATION_URL | Email verification page URL               | -              | No       |
+| SUPERADMIN_EMAIL       | Initial superadmin email                  | -              | No       |
+| SUPERADMIN_PASSWORD    | Initial superadmin password               | -              | No       |
+| SUPERADMIN_FULL_NAME   | Initial superadmin name                   | -              | No       |
+| ENABLE_REQUEST_LOGGING | Enable HTTP request logging               | true           | No       |
 
 ## Path Aliases
 
 TypeScript path aliases for cleaner imports:
 
-| Alias | Path |
-|-------|------|
-| @/* | src/* |
-| @config | src/config |
-| @modules | src/modules |
-| @infra/* | src/infra/* |
-| @common/* | src/common/* |
-| @core/* | src/core/* |
+| Alias      | Path          |
+| ---------- | ------------- |
+| @/\*       | src/\*        |
+| @config    | src/config    |
+| @modules   | src/modules   |
+| @infra/\*  | src/infra/\*  |
+| @common/\* | src/common/\* |
+| @core/\*   | src/core/\*   |
 
 ## Code Style Rules
 
-1. No comments in code - document in this README
+**IMPORTANT: Do not write any comments in code.** All documentation should be in README.md, CLAUDE.md, or .cursorrules. Code should be self-documenting through clear naming and structure.
+
+1. Do not write any comments in code - document in README.md, CLAUDE.md, or .cursorrules
 2. Use barrel exports (index.ts) for all directories
 3. Use static factory methods for response DTOs
 4. Use soft deletes (deletedAt field) for user data
@@ -667,21 +690,21 @@ TypeScript path aliases for cleaner imports:
 
 ## File Naming Conventions
 
-| Type | Pattern | Example |
-|------|---------|---------|
-| Module | `{entity}.module.ts` | `users.module.ts` |
-| Controller | `{entity}.controller.ts` | `users.controller.ts` |
-| Service | `{entity}.service.ts` | `users.service.ts` |
-| Create DTO | `create-{entity}.dto.ts` | `create-user.dto.ts` |
-| Update DTO | `update-{entity}.dto.ts` | `update-user.dto.ts` |
-| Response DTO | `{entity}.response.ts` | `user.response.ts` |
-| Guard | `{name}.guard.ts` | `jwt-auth.guard.ts` |
-| Interceptor | `{name}.interceptor.ts` | `response-wrapper.interceptor.ts` |
-| Filter | `{name}.filter.ts` | `http-exception.filter.ts` |
-| Middleware | `{name}.middleware.ts` | `correlation-id.middleware.ts` |
-| Strategy | `{name}.strategy.ts` | `jwt.strategy.ts` |
-| Unit Test | `{file}.spec.ts` | `users.service.spec.ts` |
-| E2E Test | `{feature}.e2e-spec.ts` | `auth.e2e-spec.ts` |
+| Type         | Pattern                  | Example                           |
+| ------------ | ------------------------ | --------------------------------- |
+| Module       | `{entity}.module.ts`     | `users.module.ts`                 |
+| Controller   | `{entity}.controller.ts` | `users.controller.ts`             |
+| Service      | `{entity}.service.ts`    | `users.service.ts`                |
+| Create DTO   | `create-{entity}.dto.ts` | `create-user.dto.ts`              |
+| Update DTO   | `update-{entity}.dto.ts` | `update-user.dto.ts`              |
+| Response DTO | `{entity}.response.ts`   | `user.response.ts`                |
+| Guard        | `{name}.guard.ts`        | `jwt-auth.guard.ts`               |
+| Interceptor  | `{name}.interceptor.ts`  | `response-wrapper.interceptor.ts` |
+| Filter       | `{name}.filter.ts`       | `http-exception.filter.ts`        |
+| Middleware   | `{name}.middleware.ts`   | `correlation-id.middleware.ts`    |
+| Strategy     | `{name}.strategy.ts`     | `jwt.strategy.ts`                 |
+| Unit Test    | `{file}.spec.ts`         | `users.service.spec.ts`           |
+| E2E Test     | `{feature}.e2e-spec.ts`  | `auth.e2e-spec.ts`                |
 
 ## Test File Locations
 
@@ -701,6 +724,7 @@ test/
 ```
 
 **Test Commands:**
+
 ```bash
 npm run test              # Run unit tests
 npm run test:watch        # Watch mode
@@ -713,11 +737,11 @@ npm run test:e2e          # E2E tests
 Code uses **camelCase**, database uses **snake_case**. Prisma handles the mapping:
 
 | Code (TypeScript) | Database (PostgreSQL) |
-|-------------------|----------------------|
-| `fullName` | `full_name` |
-| `emailVerified` | `email_verified` |
-| `createdAt` | `created_at` |
-| `User` (model) | `users` (table) |
+| ----------------- | --------------------- |
+| `fullName`        | `full_name`           |
+| `emailVerified`   | `email_verified`      |
+| `createdAt`       | `created_at`          |
+| `User` (model)    | `users` (table)       |
 
 ### Prisma Schema Convention
 
@@ -733,12 +757,14 @@ model User {
 ### Adding New Models
 
 When creating new Prisma models, always:
+
 1. Use camelCase for field names in schema
 2. Add `@map("snake_case")` for multi-word fields
 3. Add `@@map("table_name")` for table name (plural, snake_case)
 4. Use UUID for primary key with `@db.Uuid`
 
 Example:
+
 ```prisma
 model BlogPost {
   id          String   @id @default(uuid()) @db.Uuid
@@ -755,6 +781,7 @@ model BlogPost {
 ## Common Patterns
 
 ### Pagination
+
 ```typescript
 @Get()
 findAll(@Query() query: PaginationQueryDto) {
@@ -763,6 +790,7 @@ findAll(@Query() query: PaginationQueryDto) {
 ```
 
 ### Error Handling
+
 ```typescript
 if (!entity) {
   throw new NotFoundException('Entity not found');
@@ -770,6 +798,7 @@ if (!entity) {
 ```
 
 ### Transaction Example
+
 ```typescript
 await this.prisma.$transaction(async (tx) => {
   await tx.user.update({ ... });

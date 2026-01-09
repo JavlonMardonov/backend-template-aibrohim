@@ -7,34 +7,56 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { PaginationQueryDto } from '@common/dto';
 import { CurrentUserPayload } from '@common/types';
 import { CurrentUser, Roles } from '@core/decorators';
 import { RolesGuard } from '@core/guards';
 
 import { Role } from '@prisma/client';
 
-import { AdminUpdateUserDto, ChangePasswordDto, UpdateUserDto, UserResponse } from './dto';
+import {
+  AdminUpdateUserDto,
+  ChangePasswordDto,
+  CreateUserDto,
+  GetUsersQueryDto,
+  RequestEmailChangeDto,
+  UpdateUserDto,
+  UserResponse,
+  VerifyEmailChangeDto,
+} from './dto';
+import { EmailChangeService } from './email-change.service';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly emailChangeService: EmailChangeService,
+  ) {}
 
   @Get()
   @UseGuards(RolesGuard)
   @Roles(Role.superadmin, Role.admin)
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiResponse({ status: 200, description: 'Returns paginated users' })
-  findAll(@Query() query: PaginationQueryDto) {
-    return this.usersService.findAll(query.page, query.limit);
+  findAll(@Query() query: GetUsersQueryDto) {
+    return this.usersService.findAll(query);
+  }
+
+  @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.superadmin, Role.admin)
+  @ApiOperation({ summary: 'Create user (Admin only)' })
+  @ApiResponse({ status: 201, type: UserResponse })
+  create(@Body() dto: CreateUserDto, @CurrentUser() currentUser: CurrentUserPayload) {
+    return this.usersService.create(dto, currentUser);
   }
 
   @Get('me')
@@ -57,6 +79,22 @@ export class UsersController {
   @ApiResponse({ status: 204, description: 'Password changed successfully' })
   changePassword(@CurrentUser() user: CurrentUserPayload, @Body() dto: ChangePasswordDto) {
     return this.usersService.changePassword(user.id, dto);
+  }
+
+  @Post('me/email/request')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Request email change - sends OTP to new email' })
+  @ApiResponse({ status: 204, description: 'Verification code sent to new email' })
+  requestEmailChange(@CurrentUser() user: CurrentUserPayload, @Body() dto: RequestEmailChangeDto) {
+    return this.emailChangeService.requestEmailChange(user.id, dto);
+  }
+
+  @Post('me/email/verify')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Verify email change with OTP' })
+  @ApiResponse({ status: 204, description: 'Email changed successfully' })
+  verifyEmailChange(@CurrentUser() user: CurrentUserPayload, @Body() dto: VerifyEmailChangeDto) {
+    return this.emailChangeService.verifyEmailChange(user.id, dto);
   }
 
   @Get(':id')

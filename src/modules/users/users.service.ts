@@ -12,7 +12,14 @@ import { UserCacheService } from '@infra/redis';
 
 import { Role } from '@prisma/client';
 
-import { AdminUpdateUserDto, ChangePasswordDto, UpdateUserDto, UserResponse } from './dto';
+import {
+  AdminUpdateUserDto,
+  ChangePasswordDto,
+  CreateUserDto,
+  GetUsersQueryDto,
+  UpdateUserDto,
+  UserResponse,
+} from './dto';
 
 @Injectable()
 export class UsersService {
@@ -21,17 +28,29 @@ export class UsersService {
     private userCache: UserCacheService,
   ) {}
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(query: GetUsersQueryDto) {
+    const { page = 1, limit = 10, search, role } = query;
     const skip = (page - 1) * limit;
+
+    const where = {
+      deletedAt: null,
+      ...(role && { role }),
+      ...(search && {
+        OR: [
+          { fullName: { contains: search, mode: 'insensitive' as const } },
+          { email: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }),
+    };
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
-        where: { deletedAt: null },
+        where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.user.count({ where: { deletedAt: null } }),
+      this.prisma.user.count({ where }),
     ]);
 
     return {
@@ -45,6 +64,41 @@ export class UsersService {
         hasPreviousPage: page > 1,
       },
     };
+  }
+
+  async create(
+    dto: CreateUserDto,
+    currentUser: CurrentUserPayload,
+  ): Promise<UserResponse> {
+    // Check if email already exists
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: dto.email, deletedAt: null },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Email already registered');
+    }
+
+    // Only superadmin can assign superadmin role
+    if (dto.role === Role.superadmin && currentUser.role !== Role.superadmin) {
+      throw new ForbiddenException('Only superadmin can assign superadmin role');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        password: hashedPassword,
+        fullName: dto.fullName,
+        role: dto.role || Role.user,
+        emailVerified: true, // Admin-created users are pre-verified
+      },
+    });
+
+    return UserResponse.fromEntity(user);
   }
 
   async findById(id: string): Promise<UserResponse> {

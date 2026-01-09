@@ -124,4 +124,46 @@ export class MailService {
     `;
     await this.sendMail(email, 'Reset your password', html);
   }
+
+  async sendEmailChangeVerification(newEmail: string, code: string): Promise<void> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2>Verify Your New Email Address</h2>
+            <p>You requested to change your email address. Use the code below to verify this new email:</p>
+            <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #333;">${code}</span>
+            </div>
+            <p style="color: #666; font-size: 14px;">
+              This code will expire in 10 minutes.
+            </p>
+            <p style="color: #666; font-size: 12px; margin-top: 32px;">
+              If you didn't request this email change, please ignore this email and your email address will remain unchanged.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+    await this.sendMail(newEmail, 'Verify your new email address', html);
+  }
+
+  async sendEmailChangeNotification(oldEmail: string, newEmail: string): Promise<void> {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2>Email Address Changed</h2>
+            <p>Your account email address has been changed from <strong>${oldEmail}</strong> to <strong>${newEmail}</strong>.</p>
+            <p style="color: #666; font-size: 14px;">
+              If you did not make this change, please contact support immediately.
+            </p>
+          </div>
+        </body>
+      </html>
+    `;
+    await this.sendMail(oldEmail, 'Your email address has been changed', html);
+  }
 }
